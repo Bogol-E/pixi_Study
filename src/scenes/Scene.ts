@@ -1,51 +1,42 @@
-import { Tween, Group } from "tweedle.js";
-import { Container, Sprite, Ticker } from "pixi.js";
+import { Container, FederatedPointerEvent, Sprite } from "pixi.js";
 
 export class Scene extends Container {
-    private readonly screenWidth: number;
-    private readonly screenHeight: number;
     private clampy: Sprite;
-    private clampyVelocity: number = 5;
     constructor(screenWidth: number, screenHeight: number) {
         super();
 
-        this.screenWidth = screenWidth;
-        this.screenHeight = screenHeight;
-
-        this.clampy = Sprite.from("1231.jpeg");
+        this.clampy = Sprite.from("clampy.png");
         this.clampy.scale.set(0.2);
 
         this.clampy.anchor.set(0.5);
-        this.clampy.x = 0; // we start it at 0
-        this.clampy.y = this.screenHeight / 2;
+        this.clampy.x = screenWidth / 2;
+        this.clampy.y = screenHeight / 2;
         this.addChild(this.clampy);
 
-        // See the `, this` thingy there? That is another way of binding the context!
-        Ticker.shared.add(this.update, this);
+        // events that begin with "pointer" are touch + mouse
+        this.clampy.on("pointertap", this.onClicky, this);
 
-        // See how these chains all together
-        new Tween(this.clampy.scale).to({ x: 0.5, y: 0.5 }, 1000).repeat(Infinity).yoyo(true).start();
+        // This only works with a mouse
+        // this.clampy.on("click", this.onClicky, this);
 
-        // This is the same code, but unchained
-        // const tweeny = new Tween(this.clampy.scale);
-        // tweeny.to({ x: 0.5, y: 0.5 }, 1000);
-        // tweeny.repeat(Infinity);
-        // tweeny.yoyo(true);
-        // tweeny.start();
+        // This only work with touch
+        // this.clampy.on("tap", this.onClicky, this);
+
+        // Super important or the object will never receive mouse events!
+        this.clampy.interactive = true;
     }
-    
-    private lasttime = 0;
-    private update(deltaTime: number): void {
-        
-        this.lasttime+=deltaTime/10;
-        this.clampy.x = this.clampy.x + this.clampyVelocity * deltaTime;
-        this.clampy.y += Math.cos(this.lasttime)*10;
 
-        if (this.clampy.x > this.screenWidth) {
-            // Woah there clampy, come back inside the screen!
-            this.clampy.x = 0;
-        }
-        //You need to update a group for the tweens to do something!
-        Group.shared.update()
+    private onClicky(e: FederatedPointerEvent): void {
+        console.log("You interacted with Clampy!")
+        console.log("The data of your interaction is super interesting", e)
+
+        // Global position of the interaction
+        // e.global
+
+        // Local (inside clampy) position of the interaction
+        // clampy.toLocal(e.global)
+        // or the "unsafe" way:
+        // (e.target as DisplayObject).toLocal(e.global)
+        // Remember Clampy has the 0,0 in its center because we set the anchor to 0.5!
     }
 }
